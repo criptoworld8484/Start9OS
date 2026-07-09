@@ -11,6 +11,7 @@ sideloading on a Start9 node.
 | [`bitcoind-testnet4/`](./bitcoind-testnet4) | Bitcoin Core (Testnet4) — id `bitcoind` | `x86_64` | Bitcoin Core full node running on **testnet4**. Drop-in `bitcoind` so dependents (Fulcrum, electrs) recognize it. |
 | [`sparrow-frigate/`](./sparrow-frigate) | Frigate — id `frigate` | `x86_64`, `aarch64` | Electrum server for Silent Payments (BIP352). |
 | [`broadcast-pool/`](./broadcast-pool) | Broadcast Pool — id `broadcast-pool` | `x86_64` | Schedule and delay Bitcoin broadcasts from Sparrow/Liana. |
+| [`cloudflared/`](./cloudflared) | Cloudflare Tunnel — id `cloudflared` | `x86_64`, `aarch64` | Token-based cloudflared: expose StartOS services on your own domain via Cloudflare, no inbound ports. Routing managed in the Cloudflare dashboard. |
 
 ## Building a package
 
