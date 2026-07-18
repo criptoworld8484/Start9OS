@@ -94,7 +94,7 @@ StartOS already publishes a **Tor `.onion`** address for services like Fulcrum. 
 
 By default cloudflared connects to Cloudflare over QUIC (UDP port 7844). Some home routers/ISPs block or throttle UDP, which shows up in the logs as repeated `QUIC handshake did not complete in time` or `lookup region1.v2.argotunnel.com: i/o timeout`, and an unstable tunnel.
 
-If you see this, run the **Connection Protocol** action, choose **HTTP/2**, and restart the service. HTTP/2 uses TCP (port 7844) and works through virtually any network.
+If you see this, run the **Connection Protocol** action and choose **HTTP/2**. The tunnel restarts itself with the new setting. HTTP/2 uses TCP (port 7844) and works through virtually any network.
 
 ## Notes
 

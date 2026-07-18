@@ -7,12 +7,11 @@ FROM $CLOUDFLARED_IMAGE AS cloudflared
 # run on debian trixie slim
 FROM debian:13-slim
 
-ARG PLATFORM
-
 RUN \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
-        ca-certificates && \
+        ca-certificates \
+        curl && \
     apt-get autoclean && \
     rm -rf \
       /var/lib/apt/lists/* \

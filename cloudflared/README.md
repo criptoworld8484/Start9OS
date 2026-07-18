@@ -27,9 +27,10 @@ See [instructions.md](instructions.md) for the full setup walkthrough.
 | Package id | `cloudflared` |
 | Image | `cloudflare/cloudflared:<version>` on `debian:13-slim` |
 | Architectures | `x86_64`, `aarch64` (aarch64 emulated if missing) |
-| Command | `cloudflared tunnel --no-autoupdate --metrics 0.0.0.0:20241 run` |
+| Command | `cloudflared tunnel --no-autoupdate --metrics 127.0.0.1:20241 run` |
 | Token | `TUNNEL_TOKEN` env, saved via the **Set Tunnel Token** action, stored in the `main` volume |
-| Health check | `http://cloudflared.startos:20241/ready` (200 when connected to the edge) |
+| Health check | `http://127.0.0.1:20241/ready` inside the container; healthy only on HTTP 200, which cloudflared returns only while connected to the edge |
+| Interfaces | None. The tunnel is outbound-only, and the metrics endpoint stays on loopback because it serves unauthenticated pprof handlers |
 | Routing | Managed in the Cloudflare Zero Trust dashboard (not in StartOS) |
 | Dependencies | None |
 

@@ -1,6 +1,10 @@
 import { store } from './fileModels/store.yaml'
 import { sdk } from './sdk'
 
+// Loopback-only: nothing outside the subcontainer needs to reach the metrics
+// listener, and it serves unauthenticated pprof handlers.
+const METRICS_ADDR = '127.0.0.1:20241'
+
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info('Starting cloudflared...')
 
@@ -24,27 +28,29 @@ export const main = sdk.setupMain(async ({ effects }) => {
     'tunnel',
     '--no-autoupdate',
     '--metrics',
-    '0.0.0.0:20241',
+    METRICS_ADDR,
   ]
   if (protocol !== 'auto') {
     command.push('--protocol', protocol)
   }
   command.push('run')
 
+  const subcontainer = await sdk.SubContainer.of(
+    effects,
+    {
+      imageId: 'main',
+    },
+    sdk.Mounts.of().mountVolume({
+      volumeId: 'main',
+      subpath: null,
+      mountpoint: '/root/data',
+      readonly: false,
+    }),
+    'main',
+  )
+
   return sdk.Daemons.of(effects).addDaemon('primary', {
-    subcontainer: await sdk.SubContainer.of(
-      effects,
-      {
-        imageId: 'main',
-      },
-      sdk.Mounts.of().mountVolume({
-        volumeId: 'main',
-        subpath: null,
-        mountpoint: '/root/data',
-        readonly: false,
-      }),
-      'main',
-    ),
+    subcontainer,
     exec: {
       command,
       env: {
@@ -53,15 +59,42 @@ export const main = sdk.setupMain(async ({ effects }) => {
     },
     ready: {
       display: 'Cloudflare tunnel',
-      fn: () =>
-        sdk.healthCheck.checkWebUrl(
-          effects,
-          'http://cloudflared.startos:20241/ready',
-          {
-            successMessage: 'Cloudflare tunnel is connected',
-            errorMessage: 'Cloudflare tunnel is not connected',
-          },
-        ),
+      // /ready answers 200 only while at least one connection to the Cloudflare
+      // edge is registered, and 503 otherwise, so the status code is the signal.
+      // The check runs inside the subcontainer because METRICS_ADDR is loopback.
+      fn: async () => {
+        const res = await subcontainer.exec([
+          'curl',
+          '-s',
+          '-o',
+          '/dev/null',
+          '-w',
+          '%{http_code}',
+          '-m',
+          '3',
+          `http://${METRICS_ADDR}/ready`,
+        ])
+
+        if (res.exitCode !== 0) {
+          return {
+            result: 'starting',
+            message: 'Waiting for cloudflared to start',
+          }
+        }
+
+        const status = res.stdout.toString().trim()
+        if (status === '200') {
+          return {
+            result: 'success',
+            message: 'Cloudflare tunnel is connected',
+          }
+        }
+
+        return {
+          result: 'failure',
+          message: `Cloudflare tunnel is not connected to the Cloudflare edge (readiness endpoint returned HTTP ${status})`,
+        }
+      },
     },
     requires: [],
   })

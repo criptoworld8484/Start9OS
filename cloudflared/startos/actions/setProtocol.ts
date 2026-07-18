@@ -15,7 +15,7 @@ export const setProtocol = sdk.Action.withInput(
       name: `Connection Protocol: ${current}`,
       description:
         'Transport cloudflared uses to reach the Cloudflare edge. If your network blocks or degrades UDP/QUIC (port 7844) — symptom: repeated "QUIC handshake did not complete" errors — set this to HTTP/2.',
-      warning: 'Restart the service after saving for the change to take effect.',
+      warning: null,
       allowedStatuses: 'any',
       group: 'Configuration',
       visibility: 'enabled',
