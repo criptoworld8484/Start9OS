@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@start9labs/start-sdk": "1.5.2",
-    "liquidd-testnet": "file:../package-testnet"
+    "liquidd-testnet": "file:../liquidd-testnet"
   },
   "devDependencies": {
     "@types/node": "^22.17.1",

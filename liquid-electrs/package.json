@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@start9labs/start-sdk": "1.5.2",
-    "liquidd": "file:../package"
+    "liquidd": "file:../liquidd"
   },
   "devDependencies": {
     "@types/node": "^22.17.1",
