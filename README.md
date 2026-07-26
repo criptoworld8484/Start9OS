@@ -8,14 +8,14 @@ sideloading on a Start9 node.
 
 | Package | Service | Arch | Description | Prebuilt `.s9pk` |
 |---------|---------|------|-------------|------------------|
-| [`bitcoind-testnet4/`](./bitcoind-testnet4) | Bitcoin Core (Testnet4) — id `bitcoind` | `x86_64` | Bitcoin Core full node running on **testnet4**. Drop-in `bitcoind` so dependents (Fulcrum, electrs) recognize it. | — |
-| [`sparrow-frigate/`](./sparrow-frigate) | Frigate — id `frigate` | `x86_64`, `aarch64` | Electrum server for Silent Payments (BIP352). | — |
-| [`broadcast-pool/`](./broadcast-pool) | Broadcast Pool — id `broadcast-pool` | `x86_64` | Schedule and delay Bitcoin broadcasts from Sparrow/Liana. | [Release `startos-v0.3.19`](https://github.com/criptoworld8484/broadcast-pool/releases/tag/startos-v0.3.19) |
+| [`bitcoind-testnet4/`](./bitcoind-testnet4) | Bitcoin Core (Testnet4) — id `bitcoind` | `x86_64` | Bitcoin Core full node running on **testnet4**. Drop-in `bitcoind` so dependents (Fulcrum, electrs) recognize it. | [Release `bitcoind-testnet4-v31.0`](https://github.com/criptoworld8484/Start9OS/releases/tag/bitcoind-testnet4-v31.0) |
+| [`sparrow-frigate/`](./sparrow-frigate) | Frigate — id `frigate` | `x86_64`, `aarch64` | Electrum server for Silent Payments (BIP352). | [Release `sparrow-frigate-v1.6.0`](https://github.com/criptoworld8484/Start9OS/releases/tag/sparrow-frigate-v1.6.0) |
+| [`broadcast-pool/`](./broadcast-pool) | Broadcast Pool — id `broadcast-pool` | `x86_64` | Schedule and delay Bitcoin broadcasts from Sparrow/Liana. | [Release `startos-v0.3.23`](https://github.com/criptoworld8484/broadcast-pool/releases/tag/startos-v0.3.23) |
 | [`cloudflared/`](./cloudflared) | Cloudflare Tunnel — id `cloudflared` | `x86_64`, `aarch64` | Token-based cloudflared: expose StartOS services on your own domain via Cloudflare, no inbound ports. Routing managed in the Cloudflare dashboard. | [Release `cloudflared-v2026.7.1`](https://github.com/criptoworld8484/Start9OS/releases/tag/cloudflared-v2026.7.1) |
-| [`liquidd/`](./liquidd) | Liquid (Elements) — id `liquidd` | `x86_64`, `aarch64` | Elements full node on the **Liquid** mainnet sidechain. Peers to a `bitcoind` dependency for mainchain RPC. | — |
-| [`liquid-electrs/`](./liquid-electrs) | Liquid Electrs — id `liquid-electrs` | `x86_64` | Esplora + Electrum indexer for Liquid, built with `--features liquid`. Hard dependency on `liquidd`. | — |
-| [`liquidd-testnet/`](./liquidd-testnet) | Liquid Testnet — id `liquidd-testnet` | `x86_64`, `aarch64` | Elements node on **Liquid testnet**. Separate package so it can run alongside mainnet `liquidd`. | — |
-| [`liquid-electrs-testnet/`](./liquid-electrs-testnet) | Liquid Testnet Electrs — id `liquid-electrs-testnet` | `x86_64` | Esplora + Electrum indexer for Liquid testnet. Hard dependency on `liquidd-testnet`. | — |
+| [`liquidd/`](./liquidd) | Liquid (Elements) — id `liquidd` | `x86_64`, `aarch64` | Elements full node on the **Liquid** mainnet sidechain. Peers to a `bitcoind` dependency for mainchain RPC. | [Release `liquidd-v23.3.3`](https://github.com/criptoworld8484/Start9OS/releases/tag/liquidd-v23.3.3) |
+| [`liquid-electrs/`](./liquid-electrs) | Liquid Electrs — id `liquid-electrs` | `x86_64` | Esplora + Electrum indexer for Liquid, built with `--features liquid`. Hard dependency on `liquidd`. | [Release `liquid-electrs-v0.4.1`](https://github.com/criptoworld8484/Start9OS/releases/tag/liquid-electrs-v0.4.1) |
+| [`liquidd-testnet/`](./liquidd-testnet) | Liquid Testnet — id `liquidd-testnet` | `x86_64`, `aarch64` | Elements node on **Liquid testnet**. Separate package so it can run alongside mainnet `liquidd`. | [Release `liquidd-testnet-v23.3.3`](https://github.com/criptoworld8484/Start9OS/releases/tag/liquidd-testnet-v23.3.3) |
+| [`liquid-electrs-testnet/`](./liquid-electrs-testnet) | Liquid Testnet Electrs — id `liquid-electrs-testnet` | `x86_64` | Esplora + Electrum indexer for Liquid testnet. Hard dependency on `liquidd-testnet`. | [Release `liquid-electrs-testnet-v0.4.1`](https://github.com/criptoworld8484/Start9OS/releases/tag/liquid-electrs-testnet-v0.4.1) |
 
 ## Building a package
 
