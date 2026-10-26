@@ -16,6 +16,7 @@ sideloading on a Start9 node.
 | [`liquid-electrs/`](./liquid-electrs) | Liquid Electrs — id `liquid-electrs` | `x86_64` | Esplora + Electrum indexer for Liquid, built with `--features liquid`. Hard dependency on `liquidd`. | [Release `liquid-electrs-v0.4.1`](https://github.com/criptoworld8484/Start9OS/releases/tag/liquid-electrs-v0.4.1) |
 | [`liquidd-testnet/`](./liquidd-testnet) | Liquid Testnet — id `liquidd-testnet` | `x86_64`, `aarch64` | Elements node on **Liquid testnet**. Separate package so it can run alongside mainnet `liquidd`. | [Release `liquidd-testnet-v23.3.3`](https://github.com/criptoworld8484/Start9OS/releases/tag/liquidd-testnet-v23.3.3) |
 | [`liquid-electrs-testnet/`](./liquid-electrs-testnet) | Liquid Testnet Electrs — id `liquid-electrs-testnet` | `x86_64` | Esplora + Electrum indexer for Liquid testnet. Hard dependency on `liquidd-testnet`. | [Release `liquid-electrs-testnet-v0.4.1`](https://github.com/criptoworld8484/Start9OS/releases/tag/liquid-electrs-testnet-v0.4.1) |
+| [`fulcrum/`](./fulcrum) | Fulcrum — id `fulcrum` | `x86_64` | Electrum server (RocksDB) for Bitcoin Core. Personal build of the official wrapper tracking upstream **v2.1.4** ahead of the StartOS registry. | [Release `fulcrum-v2.1.4`](https://github.com/criptoworld8484/Start9OS/releases/tag/fulcrum-v2.1.4) |
 
 ## Building a package
 
