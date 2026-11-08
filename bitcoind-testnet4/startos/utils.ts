@@ -16,6 +16,14 @@ export const rpcPortPruned = 58332
 export const rpcbind = `0.0.0.0:${rpcPort}`
 export const rpcbindPruned = `127.0.0.1:${rpcPortPruned}`
 
+type ConfWithRpcbind = { raw?: { rpcbind?: string } }
+
+/** El puerto RPC efectivo se deriva del rpcbind del conf para que las health
+ * checks sigan el puerto real de bitcoind, no una suposición a partir de prune. */
+export function rpcPortFromConf(conf: ConfWithRpcbind): number {
+  return conf.raw?.rpcbind === rpcbindPruned ? rpcPortPruned : rpcPort
+}
+
 export const rpcallowip = '0.0.0.0/0'
 export const rpcallowipPruned = '127.0.0.1/32'
 
@@ -88,17 +96,17 @@ export type GetBlockchainInfo = {
 export const ipcSocketPath = `unix:${rootDir}/ipc/bitcoin-core.sock`
 
 /** RPC connection args shared by bitcoin-cli and shell-script wrappers. */
-export function rpcArgs(opts: { prune: boolean }): string[] {
+export function rpcArgs(conf: ConfWithRpcbind): string[] {
   return [
     `-conf=${rootDir}/bitcoin.conf`,
     `-rpccookiefile=${rootDir}/${networkSubdir}/.cookie`,
-    `-rpcport=${opts.prune ? rpcPortPruned : rpcPort}`,
+    `-rpcport=${rpcPortFromConf(conf)}`,
   ]
 }
 
 /** Full bitcoin-cli command prefix for actions running in temp subcontainers. */
-export function bitcoinCliArgs(opts: { prune: boolean }): string[] {
-  return ['bitcoin-cli', ...rpcArgs(opts)]
+export function bitcoinCliArgs(conf: ConfWithRpcbind): string[] {
+  return ['bitcoin-cli', ...rpcArgs(conf)]
 }
 
 /**

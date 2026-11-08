@@ -1,0 +1,78 @@
+diff --git a/src/users.rs b/src/users.rs
+index 6615c77..77485bc 100644
+--- a/src/users.rs
++++ b/src/users.rs
+@@ -327,17 +327,15 @@ impl User {
+             .map_or(true, |ac| ac.contains(&*req.method))
+         {
+             match &req.params {
+-                GenericRpcParams::Array(params)
+-                    if self.fetch_blocks && &*req.method == GetBlock.as_str() =>
++                _ if self.fetch_blocks && &*req.method == GetBlock.as_str() =>
+                 // only non-verbose for now
+                 {
+-                    match params.get(1).unwrap_or(&1_u64.into()) {
+-                        Value::Number(ref n) if n.as_u64() == Some(0) => {
+-                            match fetch_block_raw(
+-                                state.clone(),
+-                                serde_json::from_value(params[0].clone()).map_err(Error::from)?,
+-                            )
+-                            .await
++                    let (hash_param, verbosity_param) = getblock_args(&req.params)
++                        .ok_or_else(|| RpcError::from(Error::msg("malformed getblock params")))?;
++                    let hash = serde_json::from_value(hash_param).map_err(Error::from)?;
++                    match getblock_verbosity(&verbosity_param) {
++                        Some(0) => {
++                            match fetch_block_raw(state.clone(), hash).await
+                             {
+                                 Ok(Some(block)) => Ok(Some(RpcResponse {
+                                     id: req.id.clone(),
+@@ -356,9 +354,7 @@ impl User {
+                                 Err(e) => Ok(Some(e.into())),
+                             }
+                         }
+-                        Value::Number(ref n) if n.as_u64() == Some(1) => {
+-                            let hash =
+-                                serde_json::from_value(params[0].clone()).map_err(Error::from)?;
++                        Some(1) => {
+                             let fetch_header_req = RpcRequest {
+                                 jsonrpc: None,
+                                 id: None,
+@@ -571,6 +567,37 @@ impl User {
+ /// - **verbosity 2**: wants prevout data, which needs the undo files a pruned
+ ///   node has also discarded
+ /// - **anything malformed**: Core writes better argument errors than this would
++/// The two arguments `getblock` needs, taken from either the positional or the
++/// named spelling of its params. The verbosity is returned exactly as sent;
++/// `getblock_verbosity` normalizes the boolean form bitcoind and Fulcrum use.
++fn getblock_args(params: &GenericRpcParams) -> Option<(Value, Value)> {
++    match params {
++        GenericRpcParams::Array(a) => Some((
++            a.first()?.clone(),
++            a.get(1).cloned().unwrap_or_else(|| Value::from(1_u64)),
++        )),
++        GenericRpcParams::Object(o) => Some((
++            o.get("blockhash")?.clone(),
++            o.get("verbosity")
++                .cloned()
++                .unwrap_or_else(|| Value::from(1_u64)),
++        )),
++    }
++}
++
++/// Core accepts `0`/`1` and `false`/`true` for getblock's verbosity; the fetch
++/// serves only the raw (0) and header-bearing (1) forms.
++fn getblock_verbosity(value: &Value) -> Option<u8> {
++    match value {
++        Value::Bool(false) => Some(0),
++        Value::Bool(true) => Some(1),
++        Value::Number(n) if n.as_u64() == Some(0) => Some(0),
++        Value::Number(n) if n.as_u64() == Some(1) => Some(1),
++        Value::Null => Some(1),
++        _ => None,
++    }
++}
++
+ fn interceptable(params: &[Value]) -> Option<(bitcoin::Txid, bool, bitcoin::BlockHash)> {
+     let blockhash = serde_json::from_value(params.get(2)?.clone()).ok()?;
+     let verbose = match params.get(1) {

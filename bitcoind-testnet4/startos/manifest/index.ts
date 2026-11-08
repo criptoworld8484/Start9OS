@@ -22,7 +22,7 @@ export const manifest = setupManifest({
       source: {
         dockerBuild: {
           buildArgs: {
-            VERSION: '31.0',
+            VERSION: '32.1',
           },
         },
       },
@@ -30,7 +30,9 @@ export const manifest = setupManifest({
     },
     proxy: {
       source: {
-        dockerTag: 'ghcr.io/start9labs/btc-rpc-proxy',
+        dockerBuild: {
+          dockerfile: 'Dockerfile.proxy',
+        },
       },
       arch: ['x86_64'],
     },

@@ -1,22 +1,15 @@
 import { VersionInfo } from '@start9labs/start-sdk'
-import { rm } from 'fs/promises'
 
 export const current = VersionInfo.of({
-  version: '31.0:1',
+  version: '32.1:7',
   releaseNotes: {
     en_US:
-      'Testnet4 fixes: expose RPC cookie at volume root for dependents (Fulcrum/electrs) and lower the archival disk threshold so prune=0 is allowed.',
+      'Fixes service readiness and config drift: the RPC health check now follows the port bitcoin.conf actually binds (a mismatched rpcbind no longer leaves the service stuck at "not ready"), bitcoin.conf is re-normalized on every start so pruning, txindex and the RPC binding cannot disagree, and prune values are written numerically. Also includes the full-archival default from 32.1:6 (pruning disabled, txindex enabled; automatic pruning only for disks below 25 GB).',
     es_ES:
-      'Correcciones testnet4: expone la cookie RPC en la raíz del volumen para dependientes (Fulcrum/electrs) y baja el umbral de disco archival para permitir prune=0.',
+      'Corrige la disponibilidad del servicio y la deriva de configuración: la health check de RPC ahora sigue el puerto que bitcoin.conf realmente usa (un rpcbind desalineado ya no deja el servicio en "not ready"), bitcoin.conf se re-normaliza en cada arranque para que poda, txindex y el bind de RPC no puedan discrepar, y los valores de prune se escriben numéricos. Incluye también el default archival completo de 32.1:6 (poda deshabilitada, txindex habilitado; poda automática solo en discos de menos de 25 GB).',
   },
   migrations: {
-    up: async ({ effects }) => {},
-    down: async ({ effects }) => {
-      // v31 changed CURRENT_FEES_FILE_VERSION (149900 → 309900) and the
-      // fee estimator bucket size; ≤30 hard-fails on a v31-written file.
-      await rm('/media/startos/volumes/main/fee_estimates.dat', {
-        force: true,
-      }).catch(console.error)
-    },
+    up: async () => {},
+    down: async () => {},
   },
 })

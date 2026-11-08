@@ -38,10 +38,7 @@ export const runtimeInfo = sdk.Action.withoutInput(
       bitcoinMounts,
       'getnetworkinfo',
       async (subc) => {
-        return await subc.execFail([
-          ...bitcoinCliArgs({ prune: !!conf.prune }),
-          'getnetworkinfo',
-        ])
+        return await subc.execFail([...bitcoinCliArgs(conf), 'getnetworkinfo'])
       },
     )
 
@@ -58,7 +55,7 @@ export const runtimeInfo = sdk.Action.withoutInput(
       'getblockchaininfo',
       async (subc) => {
         return await subc.execFail([
-          ...bitcoinCliArgs({ prune: !!conf.prune }),
+          ...bitcoinCliArgs(conf),
           'getblockchaininfo',
         ])
       },

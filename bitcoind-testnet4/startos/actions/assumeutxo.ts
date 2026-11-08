@@ -97,7 +97,7 @@ export const assumeutxo = sdk.Action.withInput(
 
         do {
           const getBlockHeaderRes = await assumeutxoSubc.exec([
-            ...bitcoinCliArgs({ prune: !!conf.prune }),
+            ...bitcoinCliArgs(conf),
             'getblockheader',
             block_840_000,
           ])
@@ -110,7 +110,7 @@ export const assumeutxo = sdk.Action.withInput(
 
         await assumeutxoSubc.execFail(
           [
-            ...bitcoinCliArgs({ prune: !!conf.prune }),
+            ...bitcoinCliArgs(conf),
             '-rpcclienttimeout=0',
             'loadtxoutset',
             `${rootDir}/${snapshotTempFile}`,

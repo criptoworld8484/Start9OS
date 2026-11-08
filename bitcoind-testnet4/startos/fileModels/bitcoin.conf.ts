@@ -115,7 +115,7 @@ export const shape = z.object({
   // Performance Tuning
   dbcache: iniNumber,
   dbbatchsize: iniNumber,
-  assumevalid: iniString,
+  assumevalid: z.undefined().optional().catch(undefined),
 
   // Other
   blocknotify: iniString,
@@ -161,12 +161,12 @@ function stringifyPrimitives(a: unknown): any {
 const { InputSpec, Value, Variants, List } = sdk
 
 export const diskUsage = utils.once(() => diskusage.check('/'))
-// testnet4-only build: the full *archival* testnet4 chain (blocks + txindex)
-// is only a few GB, so the mainnet ~900 GB threshold wrongly flags normal
-// disks as "too small" and forces pruning (min 550 MiB), which blocks the
-// `prune=0` that Fulcrum/electrs require. 20 GB is a sane floor for archival
-// testnet4 with room to grow.
-export const archivalMin = 20_000_000_000
+// testnet4-only build: this fork defaults to a full archival node (prune=0,
+// txindex=1) because dependents like Fulcrum want the whole chain. The chain
+// is ~15 GB and growing (late 2026), so only genuinely small disks — below
+// 25 GB, which cannot hold it — get automatic pruning (550 MiB target) to
+// avoid bitcoind crash-looping on its low-disk check.
+export const archivalMin = 25_000_000_000
 
 export const defaultDbcache = () =>
   Math.min(Math.floor((totalmem() * 0.25) / (1024 * 1024)), 5_120)
@@ -476,7 +476,7 @@ export const fullConfigSpec = sdk.InputSpec.of({
     required: false,
     min: 0,
     integer: true,
-    footnote: `${i18n('Default')}: 125`,
+    footnote: `${i18n('Default')}: 200`,
   }),
   blocksonly: Value.triState({
     name: i18n('Blocks Only'),
@@ -659,6 +659,10 @@ function formToFile(
     rpcworkqueue,
   } = input
 
+  // Truthiness would treat a string '0' as pruned; normalize once so prune,
+  // txindex and the RPC binding can never disagree in the written file.
+  const pruneMiB = Number(prune ?? 0) || 0
+
   // Las opciones de red (rpcbind/bind/whitebind/rpcallowip/zmq*) deben ir en la
   // sección [testnet4]; Bitcoin Core 31 las rechaza en la sección por defecto
   // cuando la red activa es testnet4. Las sacamos de `raw` para no emitirlas a
@@ -699,7 +703,7 @@ function formToFile(
     discardfee: wallet?.discardfee ?? undefined,
 
     // Other
-    txindex: prune ? false : (txindex ?? undefined),
+    txindex: pruneMiB ? false : (txindex ?? undefined),
     coinstatsindex: coinstatsindex ?? undefined,
     peerbloomfilters: peerbloomfilters ?? undefined,
     peerblockfilters: blockfilters?.peerblockfilters ?? undefined,
@@ -710,14 +714,14 @@ function formToFile(
           ? 'basic'
           : false,
     blocknotify: blocknotify || undefined,
-    prune: prune ?? 0,
+    prune: pruneMiB,
     dbcache: dbcache ?? undefined,
     dbbatchsize: dbbatchsize ?? undefined,
     // Sección [testnet4]: binds de red, allow-list de RPC y ZMQ. En testnet4
     // estas opciones SÓLO son válidas dentro de esta sección, no en la global.
     testnet4: {
-      rpcbind: prune ? rpcbindPruned : rpcbind,
-      rpcallowip: prune ? rpcallowipPruned : rpcallowip,
+      rpcbind: pruneMiB ? rpcbindPruned : rpcbind,
+      rpcallowip: pruneMiB ? rpcallowipPruned : rpcallowip,
       bind: `0.0.0.0:${peerPortInternal}`,
       whitebind: `0.0.0.0:${peerPortExternal}`,
       ...(zmqEnabled ? zmqBundle : {}),
@@ -754,7 +758,12 @@ export const bitcoinConfFile = FileHelper.ini(
   { bracketedArray: false },
   {
     onRead: (a) => {
-      const base = shape.parse(a)
+      // Las opciones de red viven en la sección [testnet4] del fichero (ver
+      // formToFile), pero `shape` las modela como claves de primer nivel:
+      // aplanamos la sección antes de validar o se perderían en cada reescritura
+      // (zmqEnabled siempre resultaba false).
+      const { testnet4, ...rest } = a as Record<string, unknown>
+      const base = shape.parse({ ...rest, ...(testnet4 ?? {}) })
       return fileToForm(base)
     },
     onWrite: (a) => {

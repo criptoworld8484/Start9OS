@@ -42,7 +42,7 @@ The reference implementation of the Bitcoin protocol. See the [upstream repo](ht
 | Architectures | x86_64, aarch64, riscv64                                                    |
 | Entrypoint    | `bitcoind` (or `/opt/bitcoin/libexec/bitcoin-node` when IPC is enabled)     |
 
-The Dockerfile fetches the upstream Bitcoin Core release tarball from `bitcoincore.org`, verifies `SHA256SUMS.asc` against a pinned 5-of-7 quorum of release signers, and copies `bitcoind`, `bitcoin-cli`, and `libexec/bitcoin-node` into a slim Debian runtime alongside `curl`, `yq`, `jq`, `tini`, and `e2fsprogs`. ZMQ and IPC support come from the upstream binary.
+The Dockerfile fetches the upstream Bitcoin Core release tarball from `bitcoincore.org`, verifies `SHA256SUMS.asc` against a pinned 5-of-10 quorum of release signers, and copies `bitcoind`, `bitcoin-cli`, and `libexec/bitcoin-node` into a slim Debian runtime alongside `curl`, `yq`, `jq`, `tini`, and `e2fsprogs`. ZMQ and IPC support come from the upstream binary.
 
 Three additional containers are used:
 
@@ -71,7 +71,7 @@ Blockchain data directories (`blocks/`, `chainstate/`, `indexes/`) reside on the
 
 1. On install, StartOS sets the `nocow` attribute on the data directory (btrfs optimization via `chattr -R +C`)
 2. Default `bitcoin.conf` and `store.json` are seeded. Only values that **diverge** from upstream Bitcoin Core defaults are written (see [Default Overrides](#default-overrides)); all other settings are left unset so bitcoind uses its built-in defaults
-3. **Disk-aware defaults**: on disks smaller than 900 GB, pruning is automatically enabled (550 MiB target) and `txindex` is disabled; on larger disks, a full archival node is configured by default
+3. **Archival by default**: pruning is disabled and `txindex` enabled, so dependents (Fulcrum, electrs) can serve the whole chain; only disks smaller than 25 GB — too small to hold the chain — get automatic pruning (550 MiB target) with `txindex` disabled
 4. **I2P enabled by default**: the embedded I2P daemon starts automatically with `i2pacceptincoming=true`, so the node accepts inbound peer connections over I2P out of the box — no user configuration required
 5. **Tor proxy always configured**: the `-onion` flag is set to the StartOS Tor proxy on every start, enabling outbound connections over Tor. Inbound connections are enabled automatically when a public address (clearnet IP or Tor onion) is published on the peer interface
 6. Bitcoin Core begins syncing the blockchain (Initial Block Download)
@@ -113,7 +113,7 @@ Settings **not** managed by StartOS (hardcoded):
 | `whitebind`     | `0.0.0.0:8333`       | Required for peer connections      |
 | `bind`          | `0.0.0.0:58333`      | Internal peer listening port       |
 | `listen`        | `1`                  | Always accepting connections       |
-| `assumevalid`   | Hardcoded block hash | Performance optimization           |
+| `assumevalid`   | Not set (stripped)   | Bitcoin Core's built-in testnet4 default applies |
 | `-onion`        | `<torIp>:9050`       | StartOS Tor proxy (set at runtime) |
 
 ### Pruned Node Architecture
@@ -192,7 +192,7 @@ This is transparent to dependent services — port 8332 always serves RPC.
 
 | Check               | Method                                                                                 | Messages                                                                                       |
 | ------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| **RPC**             | Waits for `.cookie` file, then port-listening check on `8332` (or `58332` when pruned) | Ready: "The Bitcoin RPC Interface is ready"                                                    |
+| **RPC**             | Waits for `.cookie` file, then port-listening check on the RPC port `bitcoin.conf` binds (`8332`, or `58332` when pruned) | Ready: "The Bitcoin RPC Interface is ready"                                                    |
 | **Blockchain Sync** | `bitcoin-cli getblockchaininfo` (polled every 30 s; 5 s during startup/failure)        | Shows percentage during IBD; "Bitcoin is fully synced" when complete                           |
 | **I2P**             | I2PControl API (auth + router info)                                                    | "Inbound and outbound connections" or "Outbound connections only" based on `i2pacceptincoming` |
 | **Tor**             | Tor install/running status                                                             | "Inbound and outbound" when an onion address is published; otherwise "Outbound only"           |
@@ -227,8 +227,8 @@ Only settings that **diverge from upstream Bitcoin Core defaults** are seeded in
 | `zmqpubrawblock`, `zmqpubhashblock` | off | `tcp://0.0.0.0:28332` | Required by dependent services (LND, etc.) |
 | `zmqpubrawtx`, `zmqpubhashtx`, `zmqpubsequence` | off | `tcp://0.0.0.0:28333` | Required by dependent services (LND, etc.) |
 | `i2psam` | off | `127.0.0.1:7656` | Embedded I2P daemon for peer-to-peer privacy |
-| `assumevalid` | built-in block hash | custom block hash | Performance optimization for IBD |
-| `prune` (disk < 900 GB only) | 0 (off) | 550 MiB | Automatic pruning on smaller disks |
+| `txindex` | off | `1` (on) | Required by dependent services (Fulcrum, etc.) |
+| `prune` (disk < 25 GB only) | 0 (off) | 550 MiB | Automatic pruning on disks too small for the chain |
 
 ### Form defaults and footnotes
 
@@ -244,15 +244,16 @@ Where our permanent default overrides upstream, the input spec's `default` and t
 
 ## Limitations and Differences
 
-1. **Custom Docker image** — copies upstream Guix-built binaries (verified against a pinned 5-of-7 quorum of Bitcoin Core release signers) into a Debian runtime with curl, yq, jq, tini, and e2fsprogs
+1. **Custom Docker image** — copies upstream Guix-built binaries (verified against a pinned 5-of-10 quorum of Bitcoin Core release signers) into a Debian runtime with curl, yq, jq, tini, and e2fsprogs
 2. **Tor proxy always configured** — the `-onion` flag is set to the StartOS Tor proxy on every start; Tor itself is a conditional dependency (required only when onion connectivity is configured)
 3. **RPC cookie auth enforced** — `rpcuser`/`rpcpassword` are forcibly removed; authentication uses `.cookie` or `rpcauth` credentials generated via the action
-4. **Disk-aware defaults** — pruning and txindex are auto-configured based on available disk space (< 900 GB enables pruning)
+4. **Disk-aware defaults** — on disks < 25 GB pruning and txindex are auto-configured (prune on, txindex off); on those disks dependent-service tasks cannot disable pruning — out-of-range `prune` requests are ignored so the Auto-Configure form stays confirmable
 5. **Pruned nodes use RPC proxy** — an intermediary `btc-rpc-proxy` container transparently fetches pruned blocks over the P2P network, allowing dependent services to request any block even from a pruned node
 6. **IPC is experimental** — enabling IPC switches the binary from `bitcoind` to `bitcoin-node` (multiprocess); the **Enable IPC** action restarts Bitcoin Core to apply the change
 7. **5-minute shutdown timeout** — SIGTERM allows 300 seconds for graceful database flush
 8. **Embedded I2P enabled by default** — a bundled `i2pd` daemon provides the I2P SAM proxy, with `i2pacceptincoming=true`; inbound I2P connections work out of the box with no user configuration. Can be disabled via Peer Settings
 9. **CJDNS not supported** — StartOS provides no CJDNS transport, so `cjdns` is not offered as an `onlynet` option and CJDNS peer connectivity is unavailable; the other three Bitcoin networks (clearnet, Tor, I2P) are fully supported
+10. **Compact txindex format (32.1)** — Bitcoin Core 32.1 writes a smaller on-disk transaction index, but only after the index is deleted and rebuilt (existing indexes keep the old format). Previous releases cannot read the rebuilt index: if you rebuild `txindex` under 32.1 and later downgrade this package to 31.0:1, run **Delete Transaction Index** (or **Reindex Blockchain**) so the index is recreated in the readable format
 
 ## What Is Unchanged from Upstream
 

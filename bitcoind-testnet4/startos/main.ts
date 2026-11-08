@@ -16,6 +16,7 @@ import {
   rootDir,
   rpccookiefile,
   rpcPort,
+  rpcPortFromConf,
   rpcPortPruned,
   testnet4LaunchArgs,
 } from './utils'
@@ -223,7 +224,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
 
           return sdk.healthCheck.checkPortListening(
             effects,
-            bitcoinConf.prune ? rpcPortPruned : rpcPort,
+            rpcPortFromConf(bitcoinConf),
             {
               successMessage: i18n('The Bitcoin RPC Interface is ready'),
               errorMessage: i18n('The Bitcoin RPC Interface is not ready'),
@@ -242,7 +243,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
         }),
         fn: async () => {
           const res = await bitcoindSub.exec([
-            ...bitcoinCliArgs({ prune: !!bitcoinConf.prune }),
+            ...bitcoinCliArgs(bitcoinConf),
             '-rpcconnect=127.0.0.1',
             'getblockchaininfo',
           ])
@@ -451,6 +452,11 @@ export const main = sdk.setupMain(async ({ effects }) => {
         bind_address: '0.0.0.0',
         bind_port: rpcPort,
         cookie_file: rpcCookiePath,
+        // Sin este switch el proxy niega la recuperación P2P de bloques podados
+        // a los usuarios de passthrough (p. ej. Fulcrum) y les devuelve el
+        // "Block not available (pruned data)" de bitcoind.
+        default_fetch_blocks: true,
+        max_peer_concurrency: 3,
         ...(torIp
           ? {
               tor_proxy: `${torIp}:9050`,

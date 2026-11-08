@@ -13,10 +13,12 @@ RUN apt-get update && \
         ca-certificates wget gnupg && \
     rm -rf /var/lib/apt/lists/*
 
-# Pinned Bitcoin Core release signers. Each of these has signed every
-# Core release in the 28.x–31.x range (with the exception of 0xB10C,
-# who signed 29.3, 30.2, 31.0 but not 28.3). Build requires REQUIRED_QUORUM
-# valid signatures from this set.
+# Pinned Bitcoin Core release signers. The set spans long-term release
+# signers plus the signers rotated in for the 32.x series (Kung, Provoost,
+# Clark). Build requires REQUIRED_QUORUM valid signatures from this set.
+# 32.1 is signed by: 152812300785 (Ava Chow), CFB16E21 (fanquake),
+# F4FC70F0 (gugger), E61773CD (pinheadmz), F2CFC4AB (Kung),
+# ED9BDF7A (Provoost), A0083660 (Clark).
 ENV PINNED_FINGERPRINTS="\
 152812300785C96444D3334D17565732E08E5E41 \
 637DB1E23370F84AFF88CCE03152347D07DA627C \
@@ -24,7 +26,10 @@ CFB16E21C950F67FA95E558F2EEB9F5CC09526C1 \
 D1DBF2C4B96F2DEBF4C16654410108112E7EA81F \
 E61773CD6E01040E2F1BD78CE7E2984B6289C93A \
 F4FC70F07310028424EFC20A8E4256593F177720 \
-0CCBAAFD76A2ECE2CCD3141DE2FFD5B1D88CA97D"
+0CCBAAFD76A2ECE2CCD3141DE2FFD5B1D88CA97D \
+F2CFC4ABD0B99D837EEBB7D09B79B45691DB4173 \
+ED9BDF7AD6A55E232E84524257FF9BDBCC301009 \
+A0083660F235A27000CD3C81CE6EC49945C17EA6"
 ENV REQUIRED_QUORUM=5
 
 RUN case "${TARGETPLATFORM}" in \

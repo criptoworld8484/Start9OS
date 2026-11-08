@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1
+
+# Builder - Start9Labs btc-rpc-proxy at a pinned commit plus our patch: the
+# getblock interception must accept the boolean verbosity form (Fulcrum sends
+# `getblock <hash> false`) and the named-params spelling, or those requests are
+# forwarded to a pruned bitcoind and every fetch fails.
+FROM rust:1-bookworm AS builder
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends patch && \
+    rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+ADD https://github.com/Start9Labs/btc-rpc-proxy/archive/bd6d886ad13254876f0fb2e50ef93747eefad9da.tar.gz /tmp/src.tar.gz
+RUN tar -xzf /tmp/src.tar.gz --strip-components=1
+COPY assets/btc-rpc-proxy.patch /tmp/btc-rpc-proxy.patch
+RUN patch -p1 < /tmp/btc-rpc-proxy.patch && cargo build --release
+
+# Final - matches the runtime upstream ships
+FROM debian:trixie-slim
+COPY --from=builder /app/target/release/btc_rpc_proxy /usr/bin/btc_rpc_proxy
+RUN chmod +x /usr/bin/btc_rpc_proxy
+SHELL [ "/bin/bash", "-c" ]
+ENTRYPOINT chmod 600 /etc/btc_rpc_proxy/btc_rpc_proxy.toml && exec /usr/bin/btc_rpc_proxy --conf /etc/btc_rpc_proxy/btc_rpc_proxy.toml

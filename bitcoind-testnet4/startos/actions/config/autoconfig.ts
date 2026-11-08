@@ -1,4 +1,10 @@
-import { bitcoinConfFile, fullConfigSpec } from '../../fileModels/bitcoin.conf'
+import {
+  archivalMin,
+  bitcoinConfFile,
+  diskUsage,
+  fullConfigSpec,
+  minPrune,
+} from '../../fileModels/bitcoin.conf'
 import { i18n } from '../../i18n'
 import { sdk } from '../../sdk'
 
@@ -22,10 +28,28 @@ export const autoconfig = sdk.Action.withInput(
   async ({ effects, prefill }) => {
     if (!prefill) return fullConfigSpec
 
+    // Un task puede forzar valores que violan las restricciones dinámicas del
+    // propio spec (p. ej. un dependiente pidiendo prune=0 en un disco pequeño,
+    // donde el mínimo es minPrune). Mostrar ese campo deshabilitado dejaría el
+    // formulario sin confirmar posible, así que lo excluimos del prefill: no se
+    // renderiza, el validador lo elimina del input y el prune configurado se
+    // conserva.
+    const pre = { ...(prefill as Record<string, unknown>) }
+    const disk = await diskUsage()
+    const smallDisk = disk.total < archivalMin
+    const maxPrune = Math.floor((disk.total * 0.75) / (1024 * 1024))
+    const minAllowed = smallDisk ? minPrune : 0
+    if (
+      typeof pre.prune === 'number' &&
+      (pre.prune < minAllowed || pre.prune > maxPrune)
+    ) {
+      delete pre.prune
+    }
+
     return fullConfigSpec
-      .filterFromPartial(prefill as typeof fullConfigSpec._PARTIAL)
+      .filterFromPartial(pre as typeof fullConfigSpec._PARTIAL)
       .disableFromPartial(
-        prefill as typeof fullConfigSpec._PARTIAL,
+        pre as typeof fullConfigSpec._PARTIAL,
         i18n('These fields were provided by a task and cannot be edited'),
       )
   },
