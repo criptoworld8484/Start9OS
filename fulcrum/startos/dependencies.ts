@@ -17,11 +17,14 @@ const bitcoind = sdk.Dependency.required('bitcoind', {
   await sdk.action.createTask(effects, 'bitcoind', autoconfig, 'critical', {
     input: {
       kind: 'partial',
-      accept: [{ prune: 0, txindex: true, zmqEnabled: true }],
+      accept: [
+        { prune: 0, txindex: true, zmqEnabled: true },
+        { zmqEnabled: true },
+      ],
       set: { prune: 0, txindex: true, zmqEnabled: true },
     },
     reason: i18n(
-      'Pruning must be disabled, txindex and ZMQ must be enabled for Fulcrum to function properly.',
+      'ZMQ must be enabled. Disabling pruning and enabling txindex gives Fulcrum the full blockchain for the fastest lookups; on pruned nodes old blocks are fetched through the RPC proxy instead.',
     ),
     when: { condition: 'input-not-matches', once: false },
   })

@@ -3,9 +3,9 @@ import { long, short } from './i18n'
 
 export const manifest = setupManifest({
   id: 'fulcrum',
-  title: 'Fulcrum',
+  title: 'Fulcrum (Testnet4)',
   license: 'MIT',
-  packageRepo: 'https://github.com/criptoworld8484/Start9OS',
+  packageRepo: 'https://github.com/Start9Labs/fulcrum-startos',
   upstreamRepo: 'https://github.com/cculianu/Fulcrum',
   marketingUrl: 'https://github.com/cculianu/Fulcrum',
   donationUrl: 'https://github.com/cculianu/Fulcrum',

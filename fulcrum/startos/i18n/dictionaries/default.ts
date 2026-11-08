@@ -13,6 +13,7 @@ const dict = {
   'Sync Complete': 27,
   'Fulcrum has finished building its address index. The Electrum server is ready.': 28,
   'Fulcrum has finished building its address index. It is restarting once to apply a lower database memory setting, after which the Electrum server is ready.': 29,
+  'Waiting for Bitcoin to provide historical blocks': 37,
   // interfaces.ts
   'The main interface for accessing Fulcrum via Electrum protocol through SSL': 8,
   // actions/configure.ts
@@ -35,7 +36,7 @@ const dict = {
   'Largest number of transactions Fulcrum will report for a single address. An address busier than this returns an empty or partial history, balance and coin list rather than an error, so a wallet holding one shows the funds as missing. Raise this if an address you use has a very long history; the limit exists to bound the memory and time a single request can cost.': 31,
   Configuration: 24,
   // dependencies.ts
-  'Pruning must be disabled, txindex and ZMQ must be enabled for Fulcrum to function properly.': 25,
+  'ZMQ must be enabled. Disabling pruning and enabling txindex gives Fulcrum the full blockchain for the fastest lookups; on pruned nodes old blocks are fetched through the RPC proxy instead.': 25,
   Default: 26,
   // actions/reindex.ts
   Reindex: 32,
